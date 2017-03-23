@@ -1,0 +1,54 @@
+version: "2"
+
+services:
+    jenkins:
+      container_name: "jenkins"
+      image: topineeu/jenkins
+      ports:
+        - 8080:8080
+        - 50000:50000
+      tty: true
+      volumes:
+        - /opt/jenkins_home:/opt/jenkins_home:z
+        - ~/.docker:/var/.docker
+        - /var/run/docker.sock:/var/run/docker.sock
+
+    webproxy:
+      container_name: "webproxy"
+      image: topineeu/nginx
+      ports:
+        - 80:80
+        - 443:443
+      tty: true
+      volumes:
+        - ~/nginx/conf:/var/docker/conf:rw
+        - ~/nginx/logs:/var/docker/logs:rw
+        - ~/nginx/html:/var/docker/html:ro
+        - /etc/letsencrypt:/var/docker/letsencrypt:ro
+
+    mysql:
+      container_name: "sonardb"
+      image: topineeu/mysql
+      ports:
+        - 3306:3306
+      tty: true
+      environment:
+        - MYSQL_ROOT_PASSWORD=welcome
+      volumes:
+        - /opt/mysql:/var/lib/mysql:rw
+
+    sonar:
+      container_name: "sonar"
+      image: topineeu/sonarqube
+      ports:
+        - 9000:9000
+        - 9092:9092
+      tty: true
+      environment:
+        - SONARQUBE_JDBC_USERNAME=sonar
+        - SONARQUBE_JDBC_PASSWORD=sonar
+        - SONARQUBE_JDBC_URL=jdbc:mysql://sonardb:3306/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useConfigs=maxPerformance
+    volumes:
+        - /opt/sonar/data:/opt/sonarqube/data:rw
+        - /opt/sonar/plugins:/opt/sonarqube/extensions/plugins:rw
+        - /opt/sonar/logs:/opt/sonarqube/logs:rw
